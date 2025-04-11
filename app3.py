@@ -14,8 +14,8 @@ st.set_page_config(page_title="Análisis Financiero & Descripción IA", page_ico
 st.markdown("""
     <style>
         html, body, [class*="css"] {
-            background-color: #1e212d;
-            color: #ffffff;
+            background-color: #000000;
+            color: #000000;
         }
         .stButton>button {
             color: white;
@@ -36,7 +36,7 @@ st.markdown("""
         .stMarkdown {
             font-family: 'Arial', sans-serif;
             font-size: 16px;
-            color: #c1c1c1;
+            color: #black;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -58,7 +58,7 @@ with st.sidebar:
             }
             .sidebar-sub {
                 font-size: 16px;
-                color: #ccc;
+                color: #black;
                 font-style: italic;
                 margin-bottom: 15px;
             }
@@ -67,7 +67,7 @@ with st.sidebar:
                 font-weight: bold;
                 margin-top: 20px;
                 margin-bottom: 10px;
-                color: #F8F8F8;
+                color: #black;
             }
         </style>
         <div class='sidebar-title'>📊 Análisis Financiero </div>
@@ -445,7 +445,7 @@ if submit:
     st.markdown("""---""")
 
     st.markdown("""
-    <div style='text-align: center; font-size: 16px; padding-top: 20px; color: #aaaaaa;'>
+    <div style='text-align: center; font-size: 16px; padding-top: 20px; color: #black;'>
     Hecho con 💙 por <strong>Vannia Fernanda Martin Medina</strong> · 2025<br>
     Esta app combina análisis financiero tradicional 📊 con el poder de la IA 🤖<br>
     <em>Se sugiere que la información aquí mostrada se utilice con responsabilidad.</em><br><br>

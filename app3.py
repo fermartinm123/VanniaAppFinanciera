@@ -164,7 +164,7 @@ with st.sidebar:
         </style>
 
         <div class='sidebar-title'>📊 FINTECH AI</div>
-        <div class='sidebar-sub'>Comienza el Análisis</div>
+        <div class='sidebar-sub'>Comienza el Análisis: </div>
 
         <div class='sidebar-section'>💼 Ticker de la Empresa</div>
     """, unsafe_allow_html=True)

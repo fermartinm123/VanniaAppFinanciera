@@ -257,7 +257,7 @@ if submit:
                     <p style="font-size: 1.6rem; font-weight: bold; color: #ffffff; margin: 10px 0 0 0;">{valor}</p>
                 </div>
             """, unsafe_allow_html=True)
-        st.markdown("---")
+        st.markdown("----")
 
         # -------- DESCRIPCIÓN GENERADA POR IA --------
         with st.spinner("🧠 **Buscando información importante de la empresa...**"):

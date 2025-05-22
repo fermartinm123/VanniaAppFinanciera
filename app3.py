@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import google.generativeai as genai
 import os
+import requests
 
 # -------- CONFIGURACIÓN DE LA PÁGINA --------
 st.set_page_config(page_title="Análisis Financiero & Descripción IA", page_icon="📈", layout="wide")
@@ -49,36 +50,127 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 with st.sidebar:
     st.markdown("""
         <style>
+            /* Sidebar container con degradado y textura */
+            .css-1d391kg {
+                background: linear-gradient(135deg, #0b121f, #121a2a);
+                background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
+                padding: 30px 30px 40px 30px;
+                border-radius: 20px;
+                box-shadow: 0 15px 40px rgba(0, 70, 110, 0.7);
+                color: #c7d0e0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            /* Título principal azul grisáceo con glow */
             .sidebar-title {
-                font-size: 26px;
+                font-size: 30px;
                 font-weight: 800;
-                color: #00C2FF;
-                margin-bottom: 5px;
-                font-family: 'Segoe UI', sans-serif;
-            }
-            .sidebar-sub {
-                font-size: 16px;
-                color: #black;
-                font-style: italic;
+                color: #6da4d1;
+                text-align: center;
                 margin-bottom: 15px;
+                text-shadow: 0 0 10px #4a6fa9;
+                letter-spacing: 2px;
+                font-style: italic;
+                user-select: none;
             }
+
+            /* Subtítulo elegante */
+            .sidebar-sub {
+                font-size: 15px;
+                font-style: italic;
+                color: #8fa6cc;
+                margin-bottom: 35px;
+                text-align: center;
+                letter-spacing: 0.8px;
+                user-select: none;
+            }
+
+            /* Secciones con bordes dobles y color azul pastel */
             .sidebar-section {
-                font-size: 18px;
-                font-weight: bold;
-                margin-top: 20px;
-                margin-bottom: 10px;
-                color: #black;
+                font-size: 20px;
+                font-weight: 600;
+                color: #a1b3d1;
+                margin-top: 32px;
+                margin-bottom: 15px;
+                border-bottom: 3px double #4a6fa9;
+                padding-bottom: 8px;
+                letter-spacing: 1px;
+                user-select: none;
+            }
+
+            /* Inputs con sombra interior y animación */
+            input[type="text"], input[type="date"] {
+                background: #152233 !important;
+                color: #d2d9e6 !important;
+                border: 2.5px solid #4a6fa9 !important;
+                border-radius: 18px !important;
+                padding: 14px 20px !important;
+                font-size: 18px !important;
+                text-align: center !important;
+                box-shadow: inset 0 0 12px #3a5478;
+                transition: border-color 0.4s ease, box-shadow 0.4s ease;
+                user-select: text;
+            }
+            input[type="text"]:focus, input[type="date"]:focus {
+                border-color: #6da4d1 !important;
+                box-shadow: 0 0 18px #6da4d1 !important;
+                outline: none !important;
+            }
+
+            /* Botón moderno con degradado y animación */
+            .stButton > button {
+                background: linear-gradient(90deg, #5a7fa6, #3b5e8c);
+                color: #f0f5ff;
+                font-weight: 700;
+                padding: 16px 0;
+                border-radius: 25px;
+                border: none;
+                font-size: 22px;
+                letter-spacing: 1.3px;
+                box-shadow: 0 8px 30px rgba(58, 94, 140, 0.8);
+                width: 100%;
+                margin-top: 30px;
+                transition: background 0.5s ease, box-shadow 0.5s ease;
+                user-select: none;
+            }
+            .stButton > button:hover {
+                background: linear-gradient(90deg, #3b5e8c, #5a7fa6);
+                box-shadow: 0 12px 40px rgba(58, 94, 140, 1);
+                cursor: pointer;
+            }
+
+            /* Checkboxes estilizados */
+            div.stCheckbox > label > div {
+                color: #9db3d8 !important;
+                font-size: 17px !important;
+                font-weight: 600 !important;
+                user-select: none;
+                transition: color 0.3s ease;
+            }
+            div.stCheckbox > label > div:hover {
+                color: #6da4d1 !important;
+                cursor: pointer;
+            }
+
+            /* Separador personalizado */
+            hr {
+                border: none;
+                border-top: 1.5px solid #3a5478;
+                margin: 30px 0;
+                width: 90%;
+                margin-left: auto;
+                margin-right: auto;
             }
         </style>
-        <div class='sidebar-title'>📊 Análisis Financiero </div>
-        <div class='sidebar-sub'>Potenciado con IA</div>
+
+        <div class='sidebar-title'>📊 FINTECH AI</div>
+        <div class='sidebar-sub'>Comienza el Análisis</div>
+
+        <div class='sidebar-section'>💼 Ticker de la Empresa</div>
     """, unsafe_allow_html=True)
 
-    # Ticker Input
-    st.markdown("<div class='sidebar-section'>💼 Ticker de la Empresa</div>", unsafe_allow_html=True)
-    ticker = st.text_input("Ingresa el símbolo bursátil de tu elección (Ej. AAPL)", "AAPL")
+    ticker = st.text_input("", "AAPL")
 
-    # Fechas
     st.markdown("<div class='sidebar-section'>📆 Fechas a Consultar</div>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
@@ -86,19 +178,12 @@ with st.sidebar:
     with col2:
         end_date = st.date_input("Hasta:", datetime.today())
 
-    # Opciones adicionales
     st.markdown("<div class='sidebar-section'>⚙️ Opciones Adicionales</div>", unsafe_allow_html=True)
     show_comparativa = st.checkbox("Comparar con sector", value=True)
     show_descripcion = st.checkbox("Mostrar descripción de la empresa", value=True)
     show_historico = st.checkbox("Ver histórico de precios", value=True)
 
-    # Botones decorativos
-    st.markdown("<div class='sidebar-section'>📁 Exportar</div>", unsafe_allow_html=True)
-    st.button("⬇️ Descargar CSV")
-    st.button("📄 Generar PDF")
-
-    # Submit
-    st.markdown("---")
+    st.markdown("<hr>", unsafe_allow_html=True)
     submit = st.button("🚀 Generar Análisis")
 
     st.caption("© 2025 VanniaAPP - Todos los derechos reservados.")
@@ -106,13 +191,17 @@ with st.sidebar:
 
 # -------- FUNCIÓN DE VALIDACIÓN --------
 def validar_ticker(ticker):
+    ticker = ticker.upper()  # Normalizar siempre
     try:
         data = yf.Ticker(ticker)
         info = data.info
-        if "shortName" in info:
+        # Algunas veces info puede estar vacío o tener claves parciales
+        if info and "shortName" in info and info['shortName'] is not None:
             return info
-    except:
-        return None
+    except Exception as e:
+        # Puedes imprimir/loggear e si quieres debug
+        pass
+    return None
 
 # -------- FLUJO PRINCIPAL --------
 if submit:
@@ -124,6 +213,51 @@ if submit:
         **Sector:** {info.get('sector', 'N/A')}  
         **Industria:** {info.get('industry', 'N/A')}
         """)
+        st.markdown("""
+        <style>
+        @keyframes moveLine {
+        0% {background-position: 0 0;}
+        100% {background-position: 100% 0;}
+        }
+        .animated-line {
+        height: 3px;
+        background: linear-gradient(270deg, #00cfff, #005f99, #00cfff);
+        background-size: 200% 100%;
+        animation: moveLine 3s linear infinite;
+        border-radius: 10px;
+        margin: 25px 0 40px 0;
+        }
+        </style>
+        <div class="animated-line"></div>
+        """, unsafe_allow_html=True)
+
+        # -------- ANÁLISIS FUNDAMENTAL --------
+        st.markdown("### 💡 Datos Fundamentales Clave")
+
+        col1, col2, col3 = st.columns(3)
+
+        datos_clave = [
+            ("Precio Actual (USD)", f"${info.get('currentPrice', 'N/A')}"),
+            ("Ganancias por Acción (EPS)", info.get('epsTrailingTwelveMonths', 'N/A')),
+            ("Precio/Ganancias (P/E)", info.get('trailingPE', 'N/A')),
+        ]
+
+        for i, (nombre, valor) in enumerate(datos_clave):
+            col = [col1, col2, col3][i]
+            col.markdown(f"""
+                <div style="
+                    background: #121212; 
+                    border-radius: 10px; 
+                    padding: 20px; 
+                    margin-bottom: 20px; 
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                    text-align: center;
+                ">
+                    <h4 style="margin: 0; color: #00C2FF;">{nombre}</h4>
+                    <p style="font-size: 1.6rem; font-weight: bold; color: #ffffff; margin: 10px 0 0 0;">{valor}</p>
+                </div>
+            """, unsafe_allow_html=True)
+        st.markdown("---")
 
         # -------- DESCRIPCIÓN GENERADA POR IA --------
         with st.spinner("🧠 **Buscando información importante de la empresa...**"):
@@ -255,12 +389,13 @@ if submit:
         # Mostrar conclusiones
         for c in conclusiones:
             st.markdown(c)
+        st.markdown("---")
 
         # -------- SIMULACIÓN MONTECARLO --------
         st.markdown("### 🔮 Simulación Monte Carlo - Predicción a 30 días")
 
         # Número de simulaciones y días
-        num_simulaciones = 500
+        num_simulaciones = 1000  # aumentamos para más profundidad
         num_dias = 30
 
         # Calcular log-returns
@@ -283,13 +418,13 @@ if submit:
 
         # Crear gráfico
         fig_mc = go.Figure()
-        for i in range(num_simulaciones):
+        for i in range(0, num_simulaciones, int(num_simulaciones/50)):  # para no saturar el gráfico
             fig_mc.add_trace(go.Scatter(
                 x=list(range(1, num_dias+1)),
                 y=simulaciones[:, i],
                 mode='lines',
                 line=dict(width=0.5),
-                opacity=0.2,
+                opacity=0.15,
                 showlegend=False
             ))
 
@@ -303,8 +438,6 @@ if submit:
         st.plotly_chart(fig_mc, use_container_width=True)
 
         # -------- CONCLUSIÓN DE LA SIMULACIÓN --------
-        st.markdown("### 📌 Conclusión de la Simulación")
-
         precio_finales = simulaciones[-1]
         p_min = round(np.percentile(precio_finales, 5), 2)
         p_max = round(np.percentile(precio_finales, 95), 2)
@@ -316,13 +449,53 @@ if submit:
         - 📍 El precio mediano estimado es **${p_median}**.
         """)
 
-        # Análisis sencillo de tendencia esperada
-        if p_median > precio_actual:
-            st.success("📈 Las simulaciones sugieren una **tendencia alcista** en el próximo mes.")
-        elif p_median < precio_actual:
-            st.warning("📉 Las simulaciones indican una posible **corrección o baja** en el precio.")
-        else:
-            st.info("➖ Las simulaciones no muestran una dirección clara del precio.")
+
+        # -------- ESCENARIOS Y PLANIFICACIÓN --------
+        st.markdown("### 🔍 Proyección y Planificación a 30 días")
+
+        esc_opt = p_max
+        esc_neutro = p_median
+        esc_pes = p_min
+        precio_act = df['Price'].iloc[-1]
+
+        diff_opt = round((esc_opt / precio_act - 1) * 100, 2)
+        diff_neu = round((esc_neutro / precio_act - 1) * 100, 2)
+        diff_pes = round((esc_pes / precio_act - 1) * 100, 2)
+
+        st.markdown(f"""
+        - 🚀 **Escenario Optimista:** Precio podría alcanzar **${esc_opt}**, un alza potencial de **{diff_opt}%**. ¡Momento para aprovechar oportunidades!  
+        - ⚖️ **Escenario Neutral:** Precio se mantendría cerca de **${esc_neutro}**, variando alrededor de **{diff_neu}%**. Tiempo para observar y consolidar posiciones.  
+        - ⚠️ **Escenario Pesimista:** Precio podría caer hasta **${esc_pes}**, una baja de **{diff_pes}%**. Precaución, considera proteger tus inversiones.
+        """)
+
+        st.markdown("""
+        **Recomendaciones clave:**
+
+        - Si el escenario optimista se sostiene y la volatilidad es controlada, considera **mantener o aumentar posiciones** con gestión de riesgo.  
+        - Ante un posible escenario pesimista, **define límites de pérdidas (stops)** y revisa tu exposición.  
+        - Usa siempre señales técnicas y fundamentales como guía para ajustar tu estrategia.
+        """)
+        st.markdown("---")
+    
+
+        # -------- ANÁLISIS IA DE LA SIMULACIÓN --------
+        with st.spinner("🧠 Generando análisis con IA..."):
+            prompt_mc = f"""
+            Analiza de manera breve los resultados de la simulación Monte Carlo para la acción con precio actual de ${precio_actual:.2f}.
+            La simulación realizó {num_simulaciones} trayectorias para los próximos {num_dias} días.
+            Los percentiles 5% y 95% son ${p_min} y ${p_max} respectivamente, con un precio mediano estimado de ${p_median}.
+            Considera volatilidad histórica y posibles riesgos para un análisis completo y profesional.
+
+            Proporciona una conclusión clara para inversionistas, incluyendo posibles escenarios y recomendaciones de manera breve.
+            """
+
+            try:
+                respuesta_mc = model.generate_content(prompt_mc)
+                st.markdown("### 🤖 Análisis IA de la Simulación")
+                st.write(respuesta_mc.text)
+            except Exception as e:
+                st.error(f"❌ Error al generar análisis con IA: {str(e)}")
+        st.markdown("---")        
 
 
         # -------- COMPARATIVA CON EMPRESAS DEL SECTOR --------
@@ -362,6 +535,7 @@ if submit:
             st.error("❌ No se encontraron datos válidos para el ticker principal.")
     else:
         st.error("❌ **Ticker inválido. Por favor, verifica el símbolo ingresado.**")
+        
     
     # ------ RENDIMIENTOS ANUALIZADOS ------
     st.markdown("### 📈 Rendimientos Anualizados")
@@ -398,6 +572,7 @@ if submit:
     vol_anual = vol_diaria * np.sqrt(252)
 
     st.metric("📉 Volatilidad Anualizada", f"{round(vol_anual * 100, 2)}%")
+    st.markdown("---")
 
     # -------- RECOMENDACIÓN FINAL --------
     st.markdown("## 🧾 Recomendación Final")
@@ -440,6 +615,86 @@ if submit:
         """
 
     st.markdown(mensaje)
+    st.markdown("---")
+
+
+    # -------- FUNCION PARA OBTENER NOTICIAS FINANCIERAS --------
+    def obtener_noticias_finnhub(ticker, api_key, max_noticias=5):
+        hoy = datetime.today()
+        hace_1_mes = hoy - timedelta(days=30)
+        url = (
+            f'https://finnhub.io/api/v1/company-news?symbol={ticker}'
+            f'&from={hace_1_mes.strftime("%Y-%m-%d")}'
+            f'&to={hoy.strftime("%Y-%m-%d")}'
+            f'&token={api_key}'
+        )
+        response = requests.get(url)
+        if response.status_code != 200:
+            return []
+        data = response.json()
+        if isinstance(data, list):
+            noticias = []
+            for noticia in data[:max_noticias]:
+                titulo = noticia.get('headline', 'Sin título')
+                resumen = noticia.get('summary', '')
+                fecha = noticia.get('datetime', 0)
+                fecha_str = datetime.utcfromtimestamp(fecha).strftime('%Y-%m-%d') if fecha else ''
+                noticias.append(f"{fecha_str} - {titulo}. {resumen}")
+            return noticias
+        return []
+
+    # -------- INICIO DE LA SECCIÓN DE NOTICIAS Y ANALISIS --------
+    finnhub_key = "d0ndc09r01qi1cvdmb80d0ndc09r01qi1cvdmb8g"  # Tu API Key Finnhub
+    with st.spinner("📰 Cargando noticias recientes y análisis IA..."):
+        noticias = obtener_noticias_finnhub(ticker, finnhub_key)
+
+    if noticias:
+        texto_noticias = "\n".join(noticias)
+        prompt_noticias = f"""
+        Analiza estas noticias recientes para la empresa con ticker {ticker}:
+        {texto_noticias}
+
+        Resume en 2 puntos clave el sentimiento general, los riesgos principales y las oportunidades para un inversionista. 
+        Presenta la información clara, profesional, breve y concisa.
+        """
+
+        try:
+            respuesta_noticias = model.generate_content(prompt_noticias)
+            texto_limpio = respuesta_noticias.text.strip()
+            
+            # Contenedor visual elegante para mostrar resultados
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+                border-radius: 20px;
+                padding: 30px 40px;
+                margin-top: 50px;
+                max-width: 900px;
+                margin-left: auto;
+                margin-right: auto;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+                color: #f0f6fc;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.7;
+                font-size: 1.15rem;
+            ">
+                <h2 style="
+                    text-align: center; 
+                    color: #ffb347; 
+                    margin-bottom: 25px; 
+                    font-weight: 800;
+                    letter-spacing: 1.5px;
+                    text-shadow: 0 0 8px #ffb347;
+                ">📰 Análisis IA de Noticias y Sentimiento</h2>
+                <p style="white-space: pre-wrap;">{texto_limpio}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"❌ Error generando análisis IA de noticias: {str(e)}")
+    else:
+        st.info("No se encontraron noticias recientes para este ticker.")
+
+
 
     # -------- PIE DE PÁGINA --------
     st.markdown("""---""")
@@ -449,15 +704,30 @@ if submit:
     Hecho con 💙 por <strong>Vannia Fernanda Martin Medina</strong> · 2025<br>
     Esta app combina análisis financiero tradicional 📊 con el poder de la IA 🤖<br>
     <em>Se sugiere que la información aquí mostrada se utilice con responsabilidad.</em><br><br>
-    📧 ¿Sugerencias o mejoras? Jajajaja no creo! | Me merezco un 10 Profe! </em><br><br>
-    Le deseo Bonitas Vacaciones 🏝️☀️🌊
     </div>
+    """, unsafe_allow_html=True)          
+
+    # -------- PÁGINA DE INICIO --------
+else:
+    st.markdown("""
+    <div style='
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        height: 80vh; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        max-width: 800px;
+        margin: 3rem auto;
+        text-align: center;
+    '>
+        <h1 style='font-size: 3.5rem; margin-bottom: 0.3rem;'>🚀 Bienvenido al <br> <strong>Análisis Financiero Avanzado</strong></h1>
+        <p style='font-size: 1.5rem; margin-bottom: 2rem; font-weight: 300;'>
+            Combina análisis técnico tradicional con el poder de la <strong>Inteligencia Artificial</strong>
+        </p>
     """, unsafe_allow_html=True)
-
-    
-
-    
-
-
-
-

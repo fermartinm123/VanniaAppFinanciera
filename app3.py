@@ -504,18 +504,19 @@ if submit:
         fig_sector = go.Figure()
         for sec_ticker, sec_df in sector_data.items():
             if not sec_df.empty:
+                sec_df_norm = sec_df['Price'] / sec_df['Price'].iloc[0]  # Normalizar
                 fig_sector.add_trace(go.Scatter(
                     x=sec_df.index,
-                    y=sec_df['Price'],
+                    y=sec_df_norm,
                     mode='lines',
                     name=f'{sec_ticker}'
                 ))
 
-        # Agrega el ticker principal
         if not df.empty:
+            df_norm = df['Price'] / df['Price'].iloc[0]  # Normalizar ticker principal
             fig_sector.add_trace(go.Scatter(
                 x=df.index,
-                y=df['Price'],
+                y=df_norm,
                 mode='lines',
                 name=f'{ticker} (Principal)',
                 line=dict(color='red', width=2)
@@ -523,7 +524,7 @@ if submit:
             fig_sector.update_layout(
                 title=f"Comparativa de {ticker.upper()} vs empresas del sector {info.get('sector', 'N/A')}",
                 xaxis_title="Fecha",
-                yaxis_title="Precio Ajustado (USD)",
+                yaxis_title="Rendimiento Normalizado (Base 1)",
                 template="plotly_dark",
                 legend_title="Empresas",
                 xaxis=dict(showgrid=True, zeroline=True),
@@ -533,14 +534,18 @@ if submit:
             st.plotly_chart(fig_sector, use_container_width=True)
         else:
             st.error("❌ No se encontraron datos válidos para el ticker principal.")
-    else:
-        st.error("❌ **Ticker inválido. Por favor, verifica el símbolo ingresado.**")
-        
+
+                
     
     # ------ RENDIMIENTOS ANUALIZADOS ------
     st.markdown("### 📈 Rendimientos Anualizados")
 
-    fecha_actual = df.index[-1]
+    if 'df' in locals() and not df.empty:
+        fecha_actual = df.index[-1]
+    else:
+        st.error("❌ No se han cargado datos para el ticker principal.")
+        fecha_actual = None  # O maneja el flujo que necesites
+
     precios = df['Price']
 
     def calcular_rendimiento_anualizado(fecha_objetivo):
